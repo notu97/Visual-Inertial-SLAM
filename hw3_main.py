@@ -1,7 +1,8 @@
+#In[]
 import numpy as np
 from utils import *
 
-
+#In[]
 if __name__ == '__main__':
 	filename = "./data/0027.npz"
 	t,features,linear_velocity,rotational_velocity,K,b,cam_T_imu = load_data(filename)
@@ -14,3 +15,6 @@ if __name__ == '__main__':
 
 	# You can use the function below to visualize the robot pose over time
 	#visualize_trajectory_2d(world_T_imu,show_ori=True)
+
+
+# %%
