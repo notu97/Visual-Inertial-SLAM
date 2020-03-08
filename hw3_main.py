@@ -56,6 +56,7 @@ if __name__ == '__main__':
 	imu_sigma_t_t=expm(-tau*ut_cap)@imu_sigma_t_t@np.transpose(expm(-tau*ut_cap))+np.random.multivariate_normal(np.zeros(6),0.5*np.identity(6),6)
 	trajectory[:,:,time] = np.linalg.inv(imu_mu_t_t)
 	# (b) Landmark Mapping via EKF Update
+	W_T_Cam = np.linalg.inv(np.matmul(cam_T_imu,imu_mu_t_t))
 
 	# (c) Visual-Inertial SLAM
 
