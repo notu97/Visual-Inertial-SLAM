@@ -54,13 +54,14 @@ if __name__ == '__main__':
 	ut_cap=np.vstack((np.hstack((hat_operator(rotational_velocity[:,time]),hat_operator(linear_velocity[:,time]))),np.hstack((np.zeros((3,3)), hat_operator(rotational_velocity[:,time]))) ))
 	imu_mu_t_t=np.matmul(expm(-tau*ut_hat),imu_mu_t_t)
 	imu_sigma_t_t=expm(-tau*ut_cap)@imu_sigma_t_t@np.transpose(expm(-tau*ut_cap))+np.random.multivariate_normal(np.zeros(6),0.5*np.identity(6),6)
-	
+	trajectory[:,:,time] = np.linalg.inv(imu_mu_t_t)
 	# (b) Landmark Mapping via EKF Update
 
 	# (c) Visual-Inertial SLAM
 
 	# You can use the function below to visualize the robot pose over time
 	#visualize_trajectory_2d(world_T_imu,show_ori=True)
+	visualize_trajectory_2d(trajectory,show_ori=True)
 
 
 # %%
