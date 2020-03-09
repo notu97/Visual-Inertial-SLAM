@@ -26,9 +26,8 @@ if __name__ == '__main__':
 	M=np.block([[K[0:2,:], np.zeros((2,1))],[K[0:2,:], np.zeros((2,1))]])
 	M[2,3] = -K[0,0]*b
 	
-	V = 100
 	landmark_mu_t = -1*np.ones((4,np.shape(features)[1]))	# mean	4*M
-	landmark_sigma_t = np.identity(3*np.shape(features)[1])*V	# covariance	3M*3M
+	landmark_sigma_t = np.identity(3*np.shape(features)[1])*10	# covariance	3M*3M
 	D = np.vstack((np.identity(3),np.zeros((1,3))))
 	D = np.kron(np.eye(np.shape(features)[1]),D)
 #In[]	
@@ -57,6 +56,21 @@ if __name__ == '__main__':
 	trajectory[:,:,time] = np.linalg.inv(imu_mu_t_t)
 	# (b) Landmark Mapping via EKF Update
 	W_T_Cam = np.linalg.inv(np.matmul(cam_T_imu,imu_mu_t_t))
+
+	ind=np.array(np.where(np.sum(features[:,:,time],axis=0)!=-4 ))[0]
+	x_by_z=(features[0,ind,time]-M[0,2])/M[0,0]
+	y_by_z=(features[1,ind,time]-M[1,2])/M[1,1]
+	one_by_z=(-features[2,ind,time]+M[2,2]+(M[2,0]*x_by_z))/M[2,3]
+	x=x_by_z/one_by_z
+	y=y_by_z/one_by_z
+	z=1/one_by_z
+	P=np.vstack((x,y,z,np.ones(len(ind))))
+
+	# Convert to imu coord
+	P_world_coord= np.matmul(np.linalg.inv(W_T_Cam),P)
+	for j in ind:
+		pass
+
 
 	# (c) Visual-Inertial SLAM
 
