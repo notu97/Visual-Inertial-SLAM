@@ -51,6 +51,7 @@ if __name__ == '__main__':
 	landmark_sigma_t = np.identity(3*np.shape(features)[1])*V	# covariance	3M*3M
 	I = np.vstack((np.identity(3),np.zeros((1,3))))
 	I = np.kron(np.eye(np.shape(features)[1]),I)
+	E=(np.eye(3*np.shape(features)[1]))
 #In[]	
 	time=1 # TImestamp
 	# # Get valid indices and get feature coords in Left camera frame
@@ -75,7 +76,9 @@ if __name__ == '__main__':
 		ut_hat=np.hstack((np.vstack((hat_operator(rotational_velocity[:,time]),np.zeros(3))), np.hstack((linear_velocity[:,time],0)).reshape(4,1) ))
 		ut_cap=np.vstack((np.hstack((hat_operator(rotational_velocity[:,time]),hat_operator(linear_velocity[:,time]))),np.hstack((np.zeros((3,3)), hat_operator(rotational_velocity[:,time]))) ))
 		imu_mu_t_t=np.matmul(expm(-tau*ut_hat),imu_mu_t_t)
-		imu_sigma_t_t=expm(-tau*ut_cap)@imu_sigma_t_t@np.transpose(expm(-tau*ut_cap))+np.random.multivariate_normal(np.zeros(6),0.5*np.identity(6),6)
+		# imu_sigma_t_t=expm(-tau*ut_cap)@imu_sigma_t_t@np.transpose(expm(-tau*ut_cap))+np.random.multivariate_normal(np.zeros(6),0.5*np.identity(6),6)
+		imu_sigma_t_t= np.linalg.multi_dot([expm(-tau*ut_cap), imu_sigma_t_t ,np.transpose(expm(-tau*ut_cap))])+np.random.multivariate_normal(np.zeros(6),0.5*np.identity(6),6)
+		
 		trajectory[:,:,time] = np.linalg.inv(imu_mu_t_t)
 		# (b) Landmark Mapping via EKF Update
 
@@ -107,12 +110,10 @@ if __name__ == '__main__':
 			z=1/one_by_z
 			# P_optical=np.linalg.pinv(M)@features[:,:,time]
 			P_optical=np.vstack((x,y,z,np.ones(len(ind))))
-			P_cam=np.matmul(np.linalg.inv(o_T_r),P_optical)
+			# P_cam=np.matmul(np.linalg.inv(o_T_r),P_optical)
 			# Convert to world frame
-			P_world_coord= np.matmul(W_T_Cam,P_cam)
-			
-
-		# In[]	
+			P_world_coord= np.matmul(W_T_Cam,P_optical)
+				
 			for j in range(len(ind)):
 				curr_ind=ind[j]
 				if (np.array_equal(landmark_mu_t[:,ind[j]], np.array([-1,-1,-1,-1]) )):
@@ -124,17 +125,19 @@ if __name__ == '__main__':
 
 			if(np.size(update_feature_ind)!=0):
 				mu_t_bar=landmark_mu_t[:,update_feature_ind]
-				z_t_bar=M@pi_func(np.linalg.multi_dot ([o_T_r,Cam_T_W,mu_t_bar])) 
+				z_t_bar=np.matmul(M,pi_func(np.linalg.multi_dot ([o_T_r,Cam_T_W,mu_t_bar]))) 
 				z_t=features_time[:,update_feature_ind]
-				temp=Cam_T_W@mu_t_bar
+				temp=np.matmul(Cam_T_W,mu_t_bar)
 				H_t=np.zeros((4*(len(temp.T)),3*(np.shape(features)[1]) ))
 				for i in range(len(temp)):
 					q=update_feature_ind[i]
-					H_t[4*i:4*(i+1),3*q:3*(q+1)]=M@J_pi_func(temp[:,i])@(Cam_T_W@Proj.T)
-				
-				K_t=landmark_sigma_t@H_t.T@ np.linalg.inv((H_t@landmark_sigma_t@H_t.T)+np.identity(4*np.size(update_feature_ind))*V)
-				landmark_mu_t=((landmark_mu_t.reshape(-1,1))+ ((I@K_t)@( (z_t-z_t_bar).reshape(-1,1)) )).reshape(4,-1)
-				landmark_sigma_t=(np.eye(3*np.shape(features)[1])-(K_t@H_t))@landmark_sigma_t
+					H_t[4*i:4*(i+1),3*q:3*(q+1)]=np.matmul(M,J_pi_func(temp[:,i])@(Cam_T_W@Proj.T))
+
+				K_t=np.linalg.multi_dot([landmark_sigma_t,
+										H_t.T, 
+										np.linalg.inv(np.linalg.multi_dot([H_t,landmark_sigma_t,H_t.T])+np.identity(4*np.size(update_feature_ind))*V)])	
+				landmark_mu_t= ((landmark_mu_t.reshape(-1,1))+ ( np.linalg.multi_dot([I,K_t,((z_t-z_t_bar).reshape(-1,1))]) )).reshape(4,-1)
+				landmark_sigma_t=np.dot((E-np.dot(K_t,H_t)),landmark_sigma_t)
 
 
 
