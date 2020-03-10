@@ -42,7 +42,7 @@ def load_data(file_name):
   return t,features,linear_velocity,rotational_velocity,K,b,cam_T_imu
 
 
-def visualize_trajectory_2d(pose,path_name="Unknown",show_ori=False):
+def visualize_trajectory_2d(pose,landmark,path_name="Unknown",show_ori=False):
   '''
   function to visualize the trajectory in 2D
   Input:
@@ -53,7 +53,7 @@ def visualize_trajectory_2d(pose,path_name="Unknown",show_ori=False):
   fig,ax = plt.subplots(figsize=(5,5))
   n_pose = pose.shape[2]
   ax.plot(pose[0,3,:],pose[1,3,:],'r-',label=path_name)
-#   ax.plot(landmark[0,:],landmark[1,:],'bo',markersize=1,label="landmark")
+  ax.plot(landmark[0,:],landmark[1,:],'bo',markersize=1,label="landmark")
   ax.scatter(pose[0,3,0],pose[1,3,0],marker='s',label="start")
   ax.scatter(pose[0,3,-1],pose[1,3,-1],marker='o',label="end")
   if show_ori:
