@@ -139,7 +139,7 @@ if __name__ == '__main__':
 #In[]
 	# You can use the function below to visualize the robot pose over time
 	#visualize_trajectory_2d(world_T_imu,show_ori=True)
-	visualize_trajectory_2d(trajectory,landmark_mu_t,show_ori=True)
+	visualize_trajectory_2d(trajectory,landmark_mu_t,path_name="Unknown",show_ori=True)
 
 
 # %%
