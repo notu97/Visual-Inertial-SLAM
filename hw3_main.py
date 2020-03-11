@@ -37,6 +37,12 @@ if __name__ == '__main__':
 	filename = "./data/0027.npz"
 	t,features,linear_velocity,rotational_velocity,K,b,cam_T_imu = load_data(filename)
 
+	# Downsampling features
+	A=np.zeros((np.shape(features)[0],int(np.shape(features)[1]/10),np.shape(features)[2]))
+	for k in np.arange(0,np.shape(features)[1],10):
+		A[:,int(k/10),:]=features[:,k,:]
+	features=A
+
 	o_T_r=np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
 	trajectory = np.zeros((4,4,np.size(t)))
 	imu_mu_t_t = np.identity(4)					# mean
@@ -52,6 +58,7 @@ if __name__ == '__main__':
 	I = np.vstack((np.identity(3),np.zeros((1,3))))
 	I = np.kron(np.eye(np.shape(features)[1]),I)
 	E=(np.eye(3*np.shape(features)[1]))
+
 #In[]	
 	time=1 # TImestamp
 	# # Get valid indices and get feature coords in Left camera frame
@@ -125,18 +132,18 @@ if __name__ == '__main__':
 
 			if(np.size(update_feature_ind)!=0):
 				mu_t_bar=landmark_mu_t[:,update_feature_ind]
-				z_t_bar=np.matmul(M,pi_func(np.linalg.multi_dot ([o_T_r,Cam_T_W,mu_t_bar]))) 
+				z_t_bar=np.matmul(M,pi_func(np.dot (Cam_T_W,mu_t_bar))) 
 				z_t=features_time[:,update_feature_ind]
 				temp=np.matmul(Cam_T_W,mu_t_bar)
 				H_t=np.zeros((4*(len(temp.T)),3*(np.shape(features)[1]) ))
-				for i in range(len(temp)):
+				for i in range(len(update_feature_ind)):
 					q=update_feature_ind[i]
-					H_t[4*i:4*(i+1),3*q:3*(q+1)]=np.matmul(M,J_pi_func(temp[:,i])@(Cam_T_W@Proj.T))
+					H_t[4*i:4*(i+1),3*q:3*(q+1)]=np.matmul(np.matmul(M,J_pi_func(temp[:,i])), np.matmul(Cam_T_W,np.transpose(Proj)))
 
 				K_t=np.linalg.multi_dot([landmark_sigma_t,
-										H_t.T, 
-										np.linalg.inv(np.linalg.multi_dot([H_t,landmark_sigma_t,H_t.T])+np.identity(4*np.size(update_feature_ind))*V)])	
-				landmark_mu_t= ((landmark_mu_t.reshape(-1,1))+ ( np.linalg.multi_dot([I,K_t,((z_t-z_t_bar).reshape(-1,1))]) )).reshape(4,-1)
+										np.transpose(H_t), 
+										np.linalg.inv(np.linalg.multi_dot([H_t,landmark_sigma_t,np.transpose(H_t)])+np.identity(4*np.size(update_feature_ind))*V)])	
+				landmark_mu_t= ((landmark_mu_t.reshape(-1,1,order='F'))+ ( np.linalg.multi_dot([I,K_t,((z_t-z_t_bar).reshape(-1,1,order='F'))]) )).reshape(4,-1,order='F')
 				landmark_sigma_t=np.dot((E-np.dot(K_t,H_t)),landmark_sigma_t)
 
 
