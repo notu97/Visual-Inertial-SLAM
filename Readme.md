@@ -7,4 +7,3 @@ utils.py: file to load data anf plot the trajectory
 Results: Contains the results of all the datasets
 <br>
 Data: Constains the dataset
- 
