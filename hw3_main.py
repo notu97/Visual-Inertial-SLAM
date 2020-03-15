@@ -39,7 +39,7 @@ def big_dot_opp(v):
 if __name__ == '__main__':
 	filename = "./data/0027.npz" # Change dataset here
 	t,features,linear_velocity,rotational_velocity,K,b,cam_T_imu = load_data(filename)
-	features=features[:,::25,:] # Downsample Data. Set it to 1 to get best result
+	features=features[:,::2,:] # Downsample Data. Set it to 1 to get best result
 	
 	world_T_imu = np.zeros((4,4,np.size(t)))
 	imu_mu_t_t = np.identity(4)					# IMU inverse pose mean
