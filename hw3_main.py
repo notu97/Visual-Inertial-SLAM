@@ -37,7 +37,7 @@ def big_dot_opp(v):
 
 #In[]
 if __name__ == '__main__':
-	filename = "./data/0027.npz" # Change dataset here
+	filename = "./data/0022.npz" # Change dataset here
 	t,features,linear_velocity,rotational_velocity,K,b,cam_T_imu = load_data(filename)
 	features=features[:,::5,:] # Downsample Data. Set it to 1 to get best result
 	
